@@ -1,0 +1,72 @@
+
+@Export('HeartBrake_EventStream:1.0.0')
+define stream HeartBrake_AttackAlert (meta_routingKey string,
+									  meta_id_utente string,
+									  meta_id_doctor string,
+									  meta_operation_type string,
+									  meta_timestamp string,
+									  systolic_pressure double, diastolic_pressure double, heart_rate double, hypertensive_patient bool);
+
+
+
+
+partition with (meta_id_utente of InputStream )
+begin
+	
+	from InputStream[hypertensive_patient == true]#window.length(20)
+	select meta_id_utente,
+	meta_id_doctor, 
+	meta_routingKey,
+	meta_timestamp as meta_timestamp,
+	avg(systolic_pressure) as SysMiddleValue,
+	avg(diastolic_pressure) as DisMiddleValue,
+	avg(heart_rate) as HRMiddleValue,
+	systolic_pressure as CurrentSystolic,
+	hypertensive_patient
+	having SysMiddleValue > 110 
+	insert into #InferredStream;
+	
+	from every(e1=#InferredStream) ->
+	e2=#InferredStream[(e1.SysMiddleValue + 5 ) <= SysMiddleValue] 
+	select e1.meta_routingKey as meta_routingKey,
+			e1.meta_id_utente as meta_id_utente,	
+			e1.meta_id_doctor as meta_id_doctor,
+			'Heart Attack' as meta_operation_type,	
+			e1.meta_timestamp as meta_timestamp,
+			e2.SysMiddleValue as systolic_pressure,
+			e2.DisMiddleValue as diastolic_pressure,
+			e2.HRMiddleValue as heart_rate,
+			e2.hypertensive_patient as hypertensive_patient
+	output last every 2 events
+	insert into HeartBrake_AttackAlert;
+	
+	from InputStream[hypertensive_patient == false]#window.length(10)
+	select meta_id_utente,
+	meta_id_doctor,
+	meta_routingKey,
+	meta_timestamp as meta_timestamp,
+	avg(systolic_pressure) as SysMiddleValue,
+	avg(diastolic_pressure) as DisMiddleValue,
+	avg(heart_rate) as HRMiddleValue,
+	systolic_pressure as CurrentSystolic,
+	hypertensive_patient
+	having SysMiddleValue > 155
+	insert into #InferredStreamNoHypertensive;
+
+	from every(e1=#InferredStreamNoHypertensive) ->
+	e2=#InferredStreamNoHypertensive[(e1.SysMiddleValue + 5 )
+									 <= SysMiddleValue]
+	select e1.meta_routingKey as meta_routingKey,
+			e1.meta_id_utente as meta_id_utente,
+			e1.meta_id_doctor as meta_id_doctor,
+			'Heart Attack' as meta_operation_type,
+			e1.meta_timestamp as meta_timestamp,
+			e2.SysMiddleValue as systolic_pressure,
+			e2.DisMiddleValue as diastolic_pressure,
+			e2.HRMiddleValue as heart_rate,
+			e2.hypertensive_patient as hypertensive_patient
+	output last every 4 events
+	insert into HeartBrake_AttackAlert
+
+
+end;

@@ -1,0 +1,50 @@
+{
+  "name": "EpilepticEvent_Stream",
+  "version": "1.0.0",
+  "nickName": "",
+  "description": "This stream is used to analyze epileptic event",
+  "metaData": [
+    {
+      "name": "routingKey",
+      "type": "STRING"
+    },
+    {
+      "name": "id_utente",
+      "type": "STRING"
+    },
+    {
+      "name": "id_doctor",
+      "type": "STRING"
+    },
+    {
+      "name": "operation_type",
+      "type": "STRING"
+    },
+    {
+      "name": "timestamp",
+      "type": "STRING"
+    }
+  ],
+  "payloadData": [
+    {
+      "name": "systolic_pressure",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "diastolic_pressure",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "heart_rate",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "epileptic_subject",
+      "type": "BOOL"
+    },
+    {
+      "name": "number_of_events",
+      "type": "LONG"
+    }
+  ]
+}

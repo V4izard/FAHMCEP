@@ -1,0 +1,32 @@
+@Export('EpilepticEvent_Stream:1.0.0')
+    define stream EpilepticAttackAlert (meta_routingKey string,meta_id_utente string,meta_id_doctor string,
+									meta_operation_type string,
+									meta_timestamp string,
+									systolic_pressure double,
+									diastolic_pressure double,
+									heart_rate double,
+									epileptic_subject bool,
+									number_of_events long);
+
+    partition with (meta_id_utente of InputStream)
+    begin from InputStream[epileptic_subject == true
+        and (epilettiform_pattern == true
+		or (movement_type == 3
+			or movement_type == 4))
+			 ]#window.length(10)
+	select 	meta_routingKey,
+			meta_id_utente,
+			meta_id_doctor,
+			'Epileptic Attack' as meta_operation_type,
+			meta_timestamp as meta_timestamp,
+			avg(systolic_pressure) as systolic_pressure,
+			avg(diastolic_pressure) as diastolic_pressure,
+			avg(heart_rate) as heart_rate,
+			epileptic_subject as epileptic_subject ,
+			count() as number_of_events
+    group by meta_id_utente
+	having number_of_events > 5
+	output last every 2 events
+
+	insert into EpilepticAttackAlert;
+    end;

@@ -1,0 +1,47 @@
+
+
+@Export('HypoxicAttack_Stream:1.0.0')
+define stream HypoxicStream (meta_routingKey string,
+							 meta_id_utente string,
+							 meta_id_doctor string,
+							 meta_operation_type string,
+							 meta_timestamp string, systolic_pressure double, diastolic_pressure double, heart_rate double, recent_surgery bool, perc_sat_hemoglobin_last float, perc_sat_hemoglobin_middle double);
+
+
+
+partition with (meta_id_utente of InputStream )
+begin from InputStream[recent_surgery == true]#window.time(10 sec)
+
+	select meta_routingKey,
+			meta_id_utente,
+			meta_id_doctor,	
+			'Hypoxic Attack'	as meta_operation_type,
+			meta_timestamp,
+		avg(systolic_pressure) as systolic_pressure,
+		avg(diastolic_pressure) as diastolic_pressure,
+		avg(heart_rate) as heart_rate,
+		recent_surgery,
+		perc_sat_hemoglobin as perc_sat_hemoglobin_last,
+		avg(perc_sat_hemoglobin) as perc_sat_hemoglobin_middle
+	group by meta_id_utente
+	having perc_sat_hemoglobin_middle < 90.0
+	output last every 3 events
+	insert into HypoxicStream;
+	
+from InputStream[recent_surgery == false]#window.length(20)
+	select meta_routingKey,
+			meta_id_utente,
+			meta_id_doctor,		
+			'Hypoxic Attack'	as meta_operation_type,
+			meta_timestamp,
+		avg(systolic_pressure) as systolic_pressure,
+		avg(diastolic_pressure) as diastolic_pressure,
+		avg(heart_rate) as heart_rate,
+		recent_surgery,
+		perc_sat_hemoglobin as perc_sat_hemoglobin_last,
+		avg(perc_sat_hemoglobin) as perc_sat_hemoglobin_middle
+	group by meta_id_utente
+	having perc_sat_hemoglobin_middle < 90.0
+	output last every 10 events
+	insert into HypoxicStream;
+end;

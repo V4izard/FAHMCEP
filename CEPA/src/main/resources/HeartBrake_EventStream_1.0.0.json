@@ -1,0 +1,46 @@
+{
+  "name": "HeartBrake_EventStream",
+  "version": "1.0.0",
+  "nickName": "",
+  "description": "",
+  "metaData": [
+    {
+      "name": "routingKey",
+      "type": "STRING"
+    },
+    {
+      "name": "id_utente",
+      "type": "STRING"
+    },
+    {
+      "name": "id_doctor",
+      "type": "STRING"
+    },
+    {
+      "name": "operation_type",
+      "type": "STRING"
+    },
+    {
+      "name": "timestamp",
+      "type": "STRING"
+    }
+  ],
+  "payloadData": [
+    {
+      "name": "systolic_pressure",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "diastolic_pressure",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "heart_rate",
+      "type": "DOUBLE"
+    },
+    {
+      "name": "hypertensive_patient",
+      "type": "BOOL"
+    }
+  ]
+}
